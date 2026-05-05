@@ -1,0 +1,1 @@
+# AI-Tabanl--Afet-Sonras---htiya---l-eklendirmesi
