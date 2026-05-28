@@ -111,6 +111,27 @@ def test_predict_endpoint_invalid_bolge(client):
     assert json_data['status'] == 'error'
 
 
+def test_predict_endpoint_exception(client, monkeypatch):
+    """Sistemde beklenmeyen bir hata (Exception) oluştuğunda 500 döndüğünü doğrular."""
+    # Veritabanında bir hata simüle etmek için repository'yi mockluyoruz
+    def fake_id_ile_getir(bolge_id):
+        raise Exception("Beklenmeyen veritabanı hatası")
+
+    monkeypatch.setattr("api.BolgeRepository.id_ile_getir", fake_id_ile_getir)
+
+    mock_data = {
+        "bolge_id": 1,
+        "deprem_buyuklugu": 5.0,
+        "bina_yikim_orani": 0.3,
+        "hava_sicakligi": 10.0,
+        "ulasim_durumu": 1,
+        "yasli_nufus_orani": 0.1
+    }
+    response = client.post('/predict', json=mock_data)
+    assert response.status_code == 500
+    json_data = response.get_json()
+    assert json_data['status'] == 'error'
+    assert 'Beklenmeyen' in json_data['message']
 # ---------- Tahminler Endpoint Testleri ----------
 
 def test_tahminleri_getir(client):
