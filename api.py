@@ -1,8 +1,8 @@
-import joblib
 import pandas as pd
 from flask import Flask, request, jsonify
 from models import db
 from repository import TahminRepository
+from model_singleton import AIModelSingleton
 
 app = Flask(__name__)
 
@@ -15,12 +15,8 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-# Modeli Yükle
-try:
-    model = joblib.load('afet_ihtiyac_modeli.pkl')
-except Exception as e:
-    print(f"Model yüklenemedi: {e}")
-    model = None
+# Yapay zeka modelini Singleton sinifi ile tek sefer yukle
+model_singleton = AIModelSingleton()
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -34,6 +30,7 @@ def predict():
                 return jsonify({'status': 'error', 'message': f'Eksik parametre: {alan}'}), 400
 
         # Model Tahmini
+        model = model_singleton.get_model()
         if model is None:
             return jsonify({'status': 'error', 'message': 'Model yüklü değil, tahmin yapılamaz.'}), 500
 
