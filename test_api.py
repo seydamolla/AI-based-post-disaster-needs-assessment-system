@@ -132,8 +132,6 @@ def test_predict_endpoint_exception(client, monkeypatch):
     json_data = response.get_json()
     assert json_data['status'] == 'error'
     assert 'Beklenmeyen' in json_data['message']
-
-
 # ---------- Tahminler Endpoint Testleri ----------
 
 def test_tahminleri_getir(client):
