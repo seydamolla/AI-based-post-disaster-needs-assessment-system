@@ -1,4 +1,3 @@
-import pandas as pd
 from flask import Flask, request, jsonify
 from models import db
 from repository import TahminRepository
@@ -29,13 +28,9 @@ def predict():
             if alan not in veri:
                 return jsonify({'status': 'error', 'message': f'Eksik parametre: {alan}'}), 400
 
-        # Model Tahmini
-        model = model_singleton.get_model()
-        if model is None:
-            return jsonify({'status': 'error', 'message': 'Model yüklü değil, tahmin yapılamaz.'}), 500
-
-        df_istek = pd.DataFrame([veri])
-        tahmin = model.predict(df_istek)[0]
+        # Singleton üzerinden doğrudan tahmin al
+        # (DataFrame dönüşümü ve model çağrısı Singleton içinde kapsüllendi)
+        tahmin = model_singleton.predict(veri)
 
         # Repository üzerinden veritabanına kaydet
         kayit_id = TahminRepository.kaydet(veri, tahmin)
