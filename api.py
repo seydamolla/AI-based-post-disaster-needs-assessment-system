@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_migrate import Migrate
 from models import db
 from repository import TahminRepository
 from model_singleton import AIModelSingleton
@@ -10,9 +11,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///afet_verileri.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
-# Uygulama ayağa kalkarken tabloları otomatik oluştur
-with app.app_context():
-    db.create_all()
+# Flask-Migrate entegrasyonu
+migrate = Migrate(app, db)
 
 # Yapay zeka modelini Singleton sinifi ile tek sefer yukle
 model_singleton = AIModelSingleton()

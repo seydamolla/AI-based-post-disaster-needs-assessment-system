@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone
 
 db = SQLAlchemy()
 
@@ -19,4 +19,7 @@ class TahminKaydi(db.Model):
     medikal_sonucu = db.Column(db.Integer, nullable=False)
     ekip_sonucu = db.Column(db.Integer, nullable=False)
     
-    kayit_tarihi = db.Column(db.DateTime, default=datetime.utcnow)
+    kayit_tarihi = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __repr__(self):
+        return f'<TahminKaydi {self.id} - {self.kayit_tarihi}>'
