@@ -18,6 +18,16 @@ class BolgeRepository:
     def id_ile_getir(bolge_id):
         return Bolge.query.get(bolge_id)
 
+    @staticmethod
+    def il_ile_getir(il):
+        """Belirli bir ile ait tüm bölgeleri getirir."""
+        return Bolge.query.filter_by(il=il).all()
+
+    @staticmethod
+    def afet_olaylariyla_getir(bolge_id):
+        """Bölgeyi ilişkili afet olaylarıyla birlikte getirir."""
+        return Bolge.query.filter_by(id=bolge_id).first()
+
 
 class AfetOlayiRepository:
     @staticmethod
@@ -38,6 +48,29 @@ class AfetOlayiRepository:
     def id_ile_getir(olay_id):
         return AfetOlayi.query.get(olay_id)
 
+    @staticmethod
+    def bolgeye_gore_getir(bolge_id):
+        """Belirli bir bölgenin tüm afet olaylarını tarihe göre sıralar."""
+        return (AfetOlayi.query
+                .filter_by(bolge_id=bolge_id)
+                .order_by(AfetOlayi.olay_tarihi.desc())
+                .all())
+
+    @staticmethod
+    def buyukluge_gore_getir(min_buyukluk):
+        """Belirtilen büyüklüğün üzerindeki tüm afet olaylarını getirir."""
+        return (AfetOlayi.query
+                .filter(AfetOlayi.deprem_buyuklugu >= min_buyukluk)
+                .order_by(AfetOlayi.deprem_buyuklugu.desc())
+                .all())
+
+    @staticmethod
+    def tahminlerle_getir(olay_id):
+        """Afet olayını ilişkili tahmin kayıtlarıyla birlikte getirir."""
+        return (AfetOlayi.query
+                .filter_by(id=olay_id)
+                .first())
+
 
 class TahminRepository:
     @staticmethod
@@ -56,4 +89,22 @@ class TahminRepository:
 
     @staticmethod
     def olay_id_ile_getir(afet_olayi_id):
+        """Bir afet olayına ait tüm tahmin kayıtlarını getirir."""
         return TahminKaydi.query.filter_by(afet_olayi_id=afet_olayi_id).all()
+
+    @staticmethod
+    def bolge_tahminlerini_getir(bolge_id):
+        """Bir bölgeye ait tüm tahminleri afet olayıyla join ederek getirir."""
+        return (TahminKaydi.query
+                .join(AfetOlayi, TahminKaydi.afet_olayi_id == AfetOlayi.id)
+                .filter(AfetOlayi.bolge_id == bolge_id)
+                .order_by(TahminKaydi.kayit_tarihi.desc())
+                .all())
+
+    @staticmethod
+    def son_tahmin_getir(afet_olayi_id):
+        """Bir afet olayına ait en son tahmin kaydını getirir."""
+        return (TahminKaydi.query
+                .filter_by(afet_olayi_id=afet_olayi_id)
+                .order_by(TahminKaydi.kayit_tarihi.desc())
+                .first())
