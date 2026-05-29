@@ -6,7 +6,7 @@ Render build asamasinda calisir:
 """
 import random
 from api import app
-from models import db, Bolge, AfetOlayi, TahminKaydi
+from models import db, Bolge
 from repository import BolgeRepository, AfetOlayiRepository, TahminRepository
 from model_singleton import AIModelSingleton
 
