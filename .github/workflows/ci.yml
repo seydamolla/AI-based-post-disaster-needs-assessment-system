@@ -1,0 +1,41 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, "feature/**" ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Testleri Calistir
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Kodu Cek
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 Kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Bagimliliklari Yukle
+        run: |
+          python -m pip install --upgrade pip
+          pip install flask flask-sqlalchemy flask-migrate pytest
+
+      - name: Scikit-learn Yukle
+        run: pip install scikit-learn joblib pandas numpy
+
+      - name: Singleton Testlerini Calistir
+        run: pytest test_model_singleton.py -v
+
+      - name: Repository Testlerini Calistir
+        run: pytest test_repository.py -v
+
+      - name: API Testlerini Calistir
+        run: pytest test_api.py -v
+
+      - name: Tum Testleri Calistir
+        run: pytest --tb=short
