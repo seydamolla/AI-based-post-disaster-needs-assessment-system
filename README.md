@@ -3,7 +3,7 @@
 Deprem sonrası bölgeye göre acil ihtiyaçları (barınma, gıda, su, medikal, ekip) tahmin eden AI destekli API.
 
 ## 🌐 Canlı URL
-**https://afet-bf7c.onrender.com**
+**https://afet-bf7c.onrender.com/bolge**
 
 ## 📡 API Endpointleri
 | Method | Endpoint | Açıklama |
