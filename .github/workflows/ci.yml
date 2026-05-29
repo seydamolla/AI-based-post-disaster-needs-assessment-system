@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -10,6 +10,9 @@ jobs:
   test:
     name: Testleri Calistir
     runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: sqlite:///:memory:
 
     steps:
       - name: Kodu Cek
@@ -23,10 +26,8 @@ jobs:
       - name: Bagimliliklari Yukle
         run: |
           python -m pip install --upgrade pip
-          pip install flask flask-sqlalchemy flask-migrate pytest
-
-      - name: Scikit-learn Yukle
-        run: pip install scikit-learn joblib pandas numpy
+          pip install -r requirements.txt
+          pip install pytest
 
       - name: Singleton Testlerini Calistir
         run: pytest test_model_singleton.py -v
@@ -37,5 +38,13 @@ jobs:
       - name: API Testlerini Calistir
         run: pytest test_api.py -v
 
-      - name: Tum Testleri Calistir
-        run: pytest --tb=short
+  deploy:
+    name: Render Deploy
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Render Deploy Tetikle
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
