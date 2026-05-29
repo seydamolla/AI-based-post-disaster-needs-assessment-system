@@ -16,7 +16,7 @@ class BolgeRepository:
 
     @staticmethod
     def id_ile_getir(bolge_id):
-        return Bolge.query.get(bolge_id)
+        return db.session.get(Bolge, bolge_id)
 
     @staticmethod
     def il_ile_getir(il):
@@ -46,7 +46,7 @@ class AfetOlayiRepository:
 
     @staticmethod
     def id_ile_getir(olay_id):
-        return AfetOlayi.query.get(olay_id)
+        return db.session.get(AfetOlayi, olay_id)
 
     @staticmethod
     def bolgeye_gore_getir(bolge_id):

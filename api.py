@@ -4,9 +4,18 @@ from models import db
 from repository import BolgeRepository, AfetOlayiRepository, TahminRepository
 from model_singleton import AIModelSingleton
 
+import os
+
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///afet_verileri.db'
+# Bulut ortamında DATABASE_URL environment variable'dan okunur
+# Lokal geliştirmede SQLite kullanılır
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///afet_verileri.db')
+# Supabase/Render bazen "postgres://" prefix'i verir, SQLAlchemy "postgresql://" ister
+if DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
