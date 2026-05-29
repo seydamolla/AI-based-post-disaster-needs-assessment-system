@@ -2,8 +2,10 @@ services:
   - type: web
     name: afet-projesi
     runtime: python
-    buildCommand: pip install -r requirements.txt
-    preDeployCommand: flask --app api.py db upgrade
+    buildCommand: |
+      pip install -r requirements.txt &&
+      flask --app api.py db upgrade &&
+      python seed.py
     startCommand: gunicorn api:app
     envVars:
       - key: DATABASE_URL

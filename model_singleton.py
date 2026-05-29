@@ -51,4 +51,3 @@ class AIModelSingleton:
 
         df_istek = pd.DataFrame([veri])
         return self._model.predict(df_istek)[0]
-

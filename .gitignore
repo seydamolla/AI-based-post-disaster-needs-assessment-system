@@ -1,0 +1,36 @@
+# Ortam degiskenleri (hassas bilgiler)
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+.venv/
+
+# Test / Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SQLite (lokal veritabani)
+instance/
+*.db
+
+# Seed script (production'da gereksiz)
+seed_cloud.py

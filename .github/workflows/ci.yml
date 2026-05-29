@@ -7,9 +7,51 @@ on:
     branches: [ main ]
 
 jobs:
+  # ============================================================
+  # 1. BUILD & LINT - Kod kalitesi kontrolu
+  # ============================================================
+  build:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: "sqlite:///:memory:"
+
+    steps:
+      - name: Kodu Cek
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 Kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Bagimliliklari Yukle
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8
+
+      - name: Lint (flake8)
+        run: |
+          flake8 api.py models.py repository.py model_singleton.py seed.py \
+            --max-line-length=120 \
+            --ignore=E501,W503,E402
+
+      - name: Build Dogrulama
+        run: |
+          python -c "from api import app; print('Build basarili: Flask uygulamasi yuklendi')"
+          python -c "from models import db, Bolge, AfetOlayi, TahminKaydi; print('Build basarili: Modeller yuklendi')"
+          python -c "from repository import BolgeRepository; print('Build basarili: Repository yuklendi')"
+          python -c "from seed import seed_database; print('Build basarili: Seed modulu yuklendi')"
+
+  # ============================================================
+  # 2. TEST - Otomatik testler
+  # ============================================================
   test:
     name: Testleri Calistir
     runs-on: ubuntu-latest
+    needs: build
 
     env:
       DATABASE_URL: "sqlite:///:memory:"
@@ -38,13 +80,21 @@ jobs:
       - name: API Testlerini Calistir
         run: pytest test_api.py -v
 
+  # ============================================================
+  # 3. DEPLOY - Otomatik deploy (sadece main branch)
+  # ============================================================
   deploy:
     name: Render Deploy
     runs-on: ubuntu-latest
-    needs: test
+    needs: [build, test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: Render Deploy Tetikle
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          echo "Render deploy tetikleniyor..."
+          curl -X POST "$RENDER_DEPLOY_HOOK_URL"
+          echo ""
+          echo "Deploy basariyla tetiklendi!"
