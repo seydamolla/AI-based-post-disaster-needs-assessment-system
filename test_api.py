@@ -49,8 +49,15 @@ def test_bolgeleri_listele(client):
 
 # ---------- Predict Endpoint Testleri ----------
 
-def test_predict_endpoint_success(client):
+def test_predict_endpoint_success(client, monkeypatch):
     """Geçerli veri ile tahmin endpoint'inin başarılı yanıt döndüğünü doğrular."""
+    # Gerçek API çağrısı yapmamak için gemini_service mocklanır
+    import api
+    class MockGemini:
+        def kisa_degerlendirme_olustur(self, bolge, tahmin):
+            return "Test yapay zeka özeti."
+    monkeypatch.setattr(api, "gemini_service", MockGemini())
+
     # Önce bir bölge oluştur
     bolge_resp = _bolge_olustur(client)
     bolge_id = bolge_resp.get_json()['bolge_id']
@@ -71,6 +78,8 @@ def test_predict_endpoint_success(client):
     assert 'afet_olayi_id' in json_data
     assert 'sonuclar' in json_data
     assert 'bolge' in json_data
+    assert 'ai_ozet' in json_data
+    assert json_data['ai_ozet'] == "Test yapay zeka özeti."
 
 
 def test_predict_endpoint_missing_data(client):

@@ -3,8 +3,12 @@ from flask_migrate import Migrate
 from models import db
 from repository import BolgeRepository, AfetOlayiRepository, TahminRepository
 from model_singleton import AIModelSingleton
+from gemini_service import GeminiService
 
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -22,6 +26,14 @@ db.init_app(app)
 migrate = Migrate(app, db)
 
 model_singleton = AIModelSingleton()
+
+# Gemini API servisi başlat
+try:
+    gemini_service = GeminiService()
+    print("Gemini API servisi başarıyla başlatıldı.")
+except Exception as e:
+    gemini_service = None
+    print(f"Gemini API servisi başlatılamadı: {e}")
 
 
 @app.route('/bolge', methods=['POST'])
@@ -82,6 +94,14 @@ def predict():
 
         kayit_id = TahminRepository.kaydet(afet_olayi_id, tahmin)
 
+        # AI Kısa Değerlendirme Özeti
+        ai_ozet = "Yapay zekâ özeti şu an oluşturulamadı."
+        if gemini_service is not None:
+            try:
+                ai_ozet = gemini_service.kisa_degerlendirme_olustur(bolge, tahmin)
+            except Exception as e:
+                print(f"AI Özet Hatası: {e}")
+
         return jsonify({
             'status': 'success',
             'kayit_id': kayit_id,
@@ -93,7 +113,8 @@ def predict():
                 'su': int(tahmin[2]),
                 'medikal': int(tahmin[3]),
                 'ekip': int(tahmin[4])
-            }
+            },
+            'ai_ozet': ai_ozet
         }), 200
 
     except Exception as e:
@@ -117,6 +138,184 @@ def tahminleri_getir(afet_olayi_id):
         }
         for k in kayitlar
     ]), 200
+
+
+# ==================== Gemini AI Endpoint'leri ====================
+
+@app.route('/ai/analiz', methods=['POST'])
+def ai_analiz():
+    """
+    Belirli bir afet olayının tahmin sonuçlarını Gemini API ile analiz ederek
+    kapsamlı bir durum raporu üretir.
+
+    Request JSON:
+        {"afet_olayi_id": int}
+
+    Response:
+        {"status": "success", "analiz_raporu": str, "bolge": dict, "tahmin": dict}
+    """
+    if gemini_service is None:
+        return jsonify({'status': 'error', 'message': 'Gemini API servisi kullanılamıyor.'}), 503
+
+    try:
+        veri = request.get_json()
+        if not veri or 'afet_olayi_id' not in veri:
+            return jsonify({'status': 'error', 'message': 'Eksik parametre: afet_olayi_id'}), 400
+
+        afet_olayi_id = veri['afet_olayi_id']
+
+        # Afet olayını getir
+        afet_olayi = AfetOlayiRepository.id_ile_getir(afet_olayi_id)
+        if afet_olayi is None:
+            return jsonify({'status': 'error', 'message': 'Afet olayı bulunamadı.'}), 404
+
+        # Bölge bilgisini getir
+        bolge = BolgeRepository.id_ile_getir(afet_olayi.bolge_id)
+        if bolge is None:
+            return jsonify({'status': 'error', 'message': 'Bölge bulunamadı.'}), 404
+
+        # En son tahmin kaydını getir
+        tahmin = TahminRepository.son_tahmin_getir(afet_olayi_id)
+        if tahmin is None:
+            return jsonify({'status': 'error', 'message': 'Tahmin kaydı bulunamadı.'}), 404
+
+        # Gemini ile analiz raporu oluştur
+        rapor = gemini_service.analiz_raporu_olustur(bolge, tahmin, afet_olayi)
+
+        return jsonify({
+            'status': 'success',
+            'analiz_raporu': rapor,
+            'bolge': {
+                'id': bolge.id,
+                'ad': bolge.ad,
+                'il': bolge.il,
+                'ilce': bolge.ilce,
+                'nufus': bolge.nufus
+            },
+            'tahmin': {
+                'acil_barinma': tahmin.acil_barinma,
+                'gida': tahmin.gida,
+                'su': tahmin.su,
+                'medikal': tahmin.medikal,
+                'ekip': tahmin.ekip
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Gemini API hatası: {str(e)}'}), 500
+
+
+@app.route('/ai/ozetle', methods=['POST'])
+def ai_ozetle():
+    """
+    Bir bölgedeki birden fazla afet olayının tahmin sonuçlarını
+    Gemini API ile özetleyerek karşılaştırmalı analiz yapar.
+
+    Request JSON:
+        {"bolge_id": int}
+
+    Response:
+        {"status": "success", "ozet_raporu": str, "bolge": dict, "tahmin_sayisi": int}
+    """
+    if gemini_service is None:
+        return jsonify({'status': 'error', 'message': 'Gemini API servisi kullanılamıyor.'}), 503
+
+    try:
+        veri = request.get_json()
+        if not veri or 'bolge_id' not in veri:
+            return jsonify({'status': 'error', 'message': 'Eksik parametre: bolge_id'}), 400
+
+        bolge_id = veri['bolge_id']
+
+        # Bölgeyi getir
+        bolge = BolgeRepository.id_ile_getir(bolge_id)
+        if bolge is None:
+            return jsonify({'status': 'error', 'message': 'Bölge bulunamadı.'}), 404
+
+        # Bölgeye ait tüm tahminleri getir
+        tahminler = TahminRepository.bolge_tahminlerini_getir(bolge_id)
+        if not tahminler:
+            return jsonify({'status': 'error', 'message': 'Bu bölgeye ait tahmin kaydı bulunamadı.'}), 404
+
+        # Gemini ile özet oluştur
+        ozet = gemini_service.tahminleri_ozetle(bolge, tahminler)
+
+        return jsonify({
+            'status': 'success',
+            'ozet_raporu': ozet,
+            'bolge': {
+                'id': bolge.id,
+                'ad': bolge.ad,
+                'il': bolge.il,
+                'nufus': bolge.nufus
+            },
+            'tahmin_sayisi': len(tahminler)
+        }), 200
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Gemini API hatası: {str(e)}'}), 500
+
+
+@app.route('/ai/oneri', methods=['POST'])
+def ai_oneri():
+    """
+    Belirli bir afet olayının tahmin sonuçlarına dayanarak
+    Gemini API ile detaylı lojistik ve kaynak dağıtım önerileri üretir.
+
+    Request JSON:
+        {"afet_olayi_id": int}
+
+    Response:
+        {"status": "success", "lojistik_onerisi": str, "bolge": dict, "tahmin": dict}
+    """
+    if gemini_service is None:
+        return jsonify({'status': 'error', 'message': 'Gemini API servisi kullanılamıyor.'}), 503
+
+    try:
+        veri = request.get_json()
+        if not veri or 'afet_olayi_id' not in veri:
+            return jsonify({'status': 'error', 'message': 'Eksik parametre: afet_olayi_id'}), 400
+
+        afet_olayi_id = veri['afet_olayi_id']
+
+        # Afet olayını getir
+        afet_olayi = AfetOlayiRepository.id_ile_getir(afet_olayi_id)
+        if afet_olayi is None:
+            return jsonify({'status': 'error', 'message': 'Afet olayı bulunamadı.'}), 404
+
+        # Bölge bilgisini getir
+        bolge = BolgeRepository.id_ile_getir(afet_olayi.bolge_id)
+        if bolge is None:
+            return jsonify({'status': 'error', 'message': 'Bölge bulunamadı.'}), 404
+
+        # En son tahmin kaydını getir
+        tahmin = TahminRepository.son_tahmin_getir(afet_olayi_id)
+        if tahmin is None:
+            return jsonify({'status': 'error', 'message': 'Tahmin kaydı bulunamadı.'}), 404
+
+        # Gemini ile lojistik önerisi oluştur
+        oneri = gemini_service.lojistik_onerisi_olustur(bolge, tahmin, afet_olayi)
+
+        return jsonify({
+            'status': 'success',
+            'lojistik_onerisi': oneri,
+            'bolge': {
+                'id': bolge.id,
+                'ad': bolge.ad,
+                'il': bolge.il,
+                'nufus': bolge.nufus
+            },
+            'tahmin': {
+                'acil_barinma': tahmin.acil_barinma,
+                'gida': tahmin.gida,
+                'su': tahmin.su,
+                'medikal': tahmin.medikal,
+                'ekip': tahmin.ekip
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Gemini API hatası: {str(e)}'}), 500
 
 
 if __name__ == '__main__':
