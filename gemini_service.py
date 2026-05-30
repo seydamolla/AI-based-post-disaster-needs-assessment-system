@@ -67,6 +67,8 @@ Lütfen aşağıdaki başlıklar altında Türkçe analiz raporu oluştur:
 3. **İhtiyaç Önceliklendirmesi**: Tahmin sonuçlarına göre hangi ihtiyacın önce karşılanması gerektiğini sırala ve gerekçelendir
 4. **Kritik Uyarılar**: Dikkat edilmesi gereken özel durumlar (yaşlı nüfus, hava koşulları, ulaşım)
 5. **Acil Eylem Önerileri**: İlk 24-48 saat için yapılması gerekenler
+
+ÖNEMLİ NOT: Eğer ML Modeli Tahmin Sonuçlarındaki tüm ihtiyaçlar 0 (sıfır) ise, bölgede hiçbir kriz olmadığını, durumun tamamen GÜVENLİ olduğunu belirt ve acil eylem planına gerek olmadığını vurgula. Kesinlikle kriz uydurma.
 """
         response = self.client.models.generate_content(
             model=self.model_name,
@@ -178,6 +180,10 @@ Lütfen aşağıdaki başlıklar altında Türkçe lojistik plan oluştur:
         Returns:
             str: 1-2 cümlelik kısa AI değerlendirme metni
         """
+        toplam_ihtiyac = sum(tahmin)
+        if toplam_ihtiyac == 0:
+            return f"{bolge.ad} bölgesinde şu an için tespit edilen acil bir kriz veya lojistik ihtiyaç bulunmamaktadır. Durum güvenli görünmektedir."
+
         prompt = f"""Sen bir kriz yöneticisisin. Aşağıdaki tahmin verisine bakarak 
 en fazla 2 cümlelik, çok kısa bir acil durum değerlendirmesi yaz.
 
