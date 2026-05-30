@@ -6,9 +6,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
 import joblib
 
-# Eğer kodları farklı hücrelerde çalıştırıyorsanız ve df hafızadan silindiyse,
-# aşağıdaki satırın başındaki '#' işaretini kaldırarak temiz dosyayı okutabilirsiniz:
-# df = pd.read_csv("temiz_afet_verisi.csv")
+df = pd.read_csv("dengeli_afet_verisi.csv")
 
 print("🚀 Model hazırlıkları başlıyor...\n")
 
@@ -27,23 +25,21 @@ X = pd.get_dummies(X, drop_first=True)
 # --- 2. EĞİTİM VE TEST VERİSİ OLARAK BÖLME ---
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# --- 3. VERİ ÖLÇEKLENDİRME (Standardizasyon) ---
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+# --- 3. VERİ ÖLÇEKLENDİRME İPTAL EDİLDİ ---
+# Ağaç tabanlı modeller (Random Forest) ölçeklendirmeye ihtiyaç duymaz.
+# API katmanında da ölçeklendirme olmadığı için veriler ham haliyle kullanılır.
 
 # --- 4. MODEL EĞİTİMİ ---
 print("Sayısal tahmin modeli (RandomForestRegressor) eğitiliyor, lütfen bekleyin...")
 model = RandomForestRegressor(n_estimators=100, random_state=42)
-model.fit(X_train_scaled, y_train)
+model.fit(X_train, y_train)
 
 # ⚠️ Sizin kodunuzdaki eksik kısım eklendi: Modelin test verisi üzerinde tahmin yapması (y_pred oluşturulması)
-y_pred = model.predict(X_test_scaled)
+y_pred = model.predict(X_test)
 
-# Canlı sisteme (Web veya Mobil) entegre etmek için modeli ve scaler'ı kaydediyoruz
+# Canlı sisteme (Web veya Mobil) entegre etmek için modeli kaydediyoruz
 joblib.dump(model, 'afet_ihtiyac_modeli.pkl')
-joblib.dump(scaler, 'afet_scaler.pkl')
-print("💾 Model ('afet_ihtiyac_modeli.pkl') ve Scaler ('afet_scaler.pkl') başarıyla kaydedildi!\n")
+print("💾 Model ('afet_ihtiyac_modeli.pkl') başarıyla kaydedildi!\n")
 
 # --- 5. SONUÇLARI DEĞERLENDİRME VE RAPORLAMA ---
 print("✅ Eğitim Tamamlandı! İşte Sayısal Tahmin Hata Raporları:\n")

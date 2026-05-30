@@ -10,8 +10,8 @@ print(f"🔄 {veri_sayisi} satırlık dengeli veri seti üretiliyor...")
 # =====================================================================
 # 1. ÖZELLİKLER (FEATURES)
 # =====================================================================
-nufus = np.random.randint(1000, 50000, veri_sayisi)
-bina_yikim_orani = np.random.uniform(0.10, 0.85, veri_sayisi)
+nufus = np.random.randint(10000, 6000000, veri_sayisi)
+bina_yikim_orani = np.random.uniform(0.0, 1.0, veri_sayisi)
 hava_sicakligi = np.random.uniform(-5, 38, veri_sayisi)
 ulasim_durumu = np.random.choice([0, 1, 2], veri_sayisi, p=[0.2, 0.5, 0.3])
 yasli_nufus_orani = np.random.uniform(0.08, 0.22, veri_sayisi)
@@ -21,23 +21,23 @@ yasli_nufus_orani = np.random.uniform(0.08, 0.22, veri_sayisi)
 # =====================================================================
 
 # Barınma
-barinma_temel = (nufus * bina_yikim_orani) * (1 + (20 - hava_sicakligi)*0.01)
+barinma_temel = (nufus * bina_yikim_orani * 0.1) * (1 + (20 - hava_sicakligi)*0.01)
 acil_barinma_ihtiyaci = barinma_temel + np.random.normal(0, np.abs(barinma_temel * 0.10))
 
 # Gıda
-gida_temel = (nufus * bina_yikim_orani * 2.5)
+gida_temel = (nufus * bina_yikim_orani * 0.3)
 gida_ihtiyaci = gida_temel + np.random.normal(0, np.abs(gida_temel * 0.08))
 
 # Su
-su_temel = (nufus * 5) + (bina_yikim_orani * 1000)
+su_temel = (nufus * bina_yikim_orani * 1.5)
 su_ihtiyaci = su_temel + np.random.normal(0, np.abs(su_temel * 0.08))
 
 # Medikal
-medikal_temel = (nufus * bina_yikim_orani * yasli_nufus_orani * 1.5)
+medikal_temel = (nufus * bina_yikim_orani * yasli_nufus_orani * 0.5)
 medikal_ihtiyac = medikal_temel + np.random.normal(0, np.abs(medikal_temel * 0.12))
 
-# Ekip (Çökmeye sebep olan yer burasıydı, np.abs ile çözüldü)
-ekip_temel = (bina_yikim_orani * 150) + (nufus / 1000) - (ulasim_durumu * 10)
+# Ekip
+ekip_temel = (bina_yikim_orani * 150) + (nufus * bina_yikim_orani / 2000)
 ekip_ihtiyaci = ekip_temel + np.random.normal(0, np.abs(ekip_temel * 0.15))
 
 # =====================================================================
