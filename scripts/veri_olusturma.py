@@ -11,7 +11,14 @@ print(f"🔄 {veri_sayisi} satırlık dengeli veri seti üretiliyor...")
 # 1. ÖZELLİKLER (FEATURES)
 # =====================================================================
 nufus = np.random.randint(10000, 6000000, veri_sayisi)
-bina_yikim_orani = np.random.uniform(0.0, 1.0, veri_sayisi)
+deprem_buyuklugu = np.random.uniform(4.0, 8.5, veri_sayisi)
+
+# Gerçekçi yıkım: 4.0 -> %0, 5.0 -> %1, 6.0 -> %8, 7.0 -> %27, 8.0 -> %64
+bina_yikim_orani = np.clip(((deprem_buyuklugu - 4.0) ** 3) / 100, 0.0, 0.85)
+
+# Rastgelelik (Noise) ekle ki model ezberlemesin (Aynı şiddete farklı yıkımlar olabilsin)
+bina_yikim_orani = bina_yikim_orani * np.random.uniform(0.5, 1.5, veri_sayisi)
+bina_yikim_orani = np.clip(bina_yikim_orani, 0.0, 1.0)
 hava_sicakligi = np.random.uniform(-5, 38, veri_sayisi)
 ulasim_durumu = np.random.choice([0, 1, 2], veri_sayisi, p=[0.2, 0.5, 0.3])
 yasli_nufus_orani = np.random.uniform(0.08, 0.22, veri_sayisi)
@@ -20,8 +27,8 @@ yasli_nufus_orani = np.random.uniform(0.08, 0.22, veri_sayisi)
 # 2. DENGELİ HEDEFLER (TARGETS) - np.abs() ile Hata Giderildi
 # =====================================================================
 
-# Barınma
-barinma_temel = (nufus * bina_yikim_orani * 0.1) * (1 + (20 - hava_sicakligi)*0.01)
+# Barınma (Her çadırda ortalama 6 kişi kalır mantığı)
+barinma_temel = (nufus * bina_yikim_orani * 0.15) * (1 + (20 - hava_sicakligi)*0.01)
 acil_barinma_ihtiyaci = barinma_temel + np.random.normal(0, np.abs(barinma_temel * 0.10))
 
 # Gıda
@@ -32,8 +39,8 @@ gida_ihtiyaci = gida_temel + np.random.normal(0, np.abs(gida_temel * 0.08))
 su_temel = (nufus * bina_yikim_orani * 1.5)
 su_ihtiyaci = su_temel + np.random.normal(0, np.abs(su_temel * 0.08))
 
-# Medikal
-medikal_temel = (nufus * bina_yikim_orani * yasli_nufus_orani * 0.5)
+# Medikal (Yaralı sayısı)
+medikal_temel = (nufus * bina_yikim_orani * 0.05) * (1 + yasli_nufus_orani)
 medikal_ihtiyac = medikal_temel + np.random.normal(0, np.abs(medikal_temel * 0.12))
 
 # Ekip
@@ -45,6 +52,7 @@ ekip_ihtiyaci = ekip_temel + np.random.normal(0, np.abs(ekip_temel * 0.15))
 # =====================================================================
 df = pd.DataFrame({
     'nufus': nufus,
+    'deprem_buyuklugu': deprem_buyuklugu,
     'bina_yikim_orani': bina_yikim_orani,
     'hava_sicakligi': hava_sicakligi,
     'ulasim_durumu': ulasim_durumu,

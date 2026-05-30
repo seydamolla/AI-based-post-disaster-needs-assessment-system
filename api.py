@@ -87,6 +87,7 @@ def predict():
 
         tahmin_verisi = {
             'nufus': bolge.nufus,
+            'deprem_buyuklugu': veri['deprem_buyuklugu'],
             'bina_yikim_orani': veri['bina_yikim_orani'],
             'hava_sicakligi': veri['hava_sicakligi'],
             'ulasim_durumu': veri['ulasim_durumu'],
