@@ -110,6 +110,7 @@ def predict():
                 ai_ozet = gemini_service.kisa_degerlendirme_olustur(bolge, tahmin)
             except Exception as e:
                 print(f"AI Özet Hatası: {e}")
+                ai_ozet = "⚠️ Gemini Yapay Zeka kotası şu an dolu. Lütfen 1 dakika bekleyip tekrar deneyin."
 
         return jsonify({
             'status': 'success',
@@ -189,7 +190,23 @@ def ai_analiz():
             return jsonify({'status': 'error', 'message': 'Tahmin kaydı bulunamadı.'}), 404
 
         # Gemini ile analiz raporu oluştur
-        rapor = gemini_service.analiz_raporu_olustur(bolge, tahmin, afet_olayi)
+        try:
+            rapor = gemini_service.analiz_raporu_olustur(bolge, tahmin, afet_olayi)
+        except Exception as e:
+            rapor = f"""
+## ⚠️ Yapay Zeka Servisi (Gemini) Geçici Olarak Kullanılamıyor
+
+Şu anda yapay zeka servisinin ücretsiz kullanım limiti (dakika başı istek kotası) dolmuştur. Detaylı doğal dil analizi üretilememektedir. Ancak makine öğrenmesi tahminlerimiz güvendedir.
+
+### 📊 Elde Edilen Sayısal Tahminler:
+- **Acil Barınma:** {tahmin.acil_barinma:,} Çadır/Konteyner
+- **Gıda:** {tahmin.gida:,} Öğün
+- **Su:** {tahmin.su:,} Litre
+- **Medikal Kit:** {tahmin.medikal:,} Adet
+- **Arama Kurtarma:** {tahmin.ekip:,} Ekip
+
+*Lütfen API kotasının sıfırlanması için yaklaşık 1 dakika bekleyip raporu tekrar üretmeyi deneyin.*
+"""
 
         return jsonify({
             'status': 'success',
@@ -211,7 +228,7 @@ def ai_analiz():
         }), 200
 
     except Exception as e:
-        return jsonify({'status': 'error', 'message': f'Gemini API hatası: {str(e)}'}), 500
+        return jsonify({'status': 'error', 'message': f'Sunucu Hatası: {str(e)}'}), 500
 
 
 @app.route('/ai/ozetle', methods=['POST'])
