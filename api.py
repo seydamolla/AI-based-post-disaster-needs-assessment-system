@@ -93,7 +93,13 @@ def predict():
             'ulasim_durumu': veri['ulasim_durumu'],
             'yasli_nufus_orani': veri['yasli_nufus_orani'],
         }
-        tahmin = model_singleton.predict(tahmin_verisi)
+        # İş Kuralı (Business Logic): Eğer bina yıkımı %0 ise veya deprem 3.5'tan küçükse 
+        # acil bir kriz durumu yoktur, yapay zeka istatistiğine gerek kalmadan 0 döndürülür.
+        if veri['bina_yikim_orani'] <= 0.0 or veri['deprem_buyuklugu'] < 3.5:
+            tahmin = [0, 0, 0, 0, 0]
+        else:
+            # Makine öğrenmesi tahmini
+            tahmin = model_singleton.predict(tahmin_verisi)
 
         kayit_id = TahminRepository.kaydet(afet_olayi_id, tahmin)
 
