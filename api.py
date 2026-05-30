@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from flask_migrate import Migrate
 from models import db
 from repository import BolgeRepository, AfetOlayiRepository, TahminRepository
@@ -11,6 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app) # Tüm domainlerden gelen isteklere izin ver
 
 # Bulut ortamında DATABASE_URL environment variable'dan okunur
 # Lokal geliştirmede SQLite kullanılır
