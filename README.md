@@ -1,99 +1,132 @@
-# AI Tabanli Afet Sonrasi Ihtiyac Olceklendirmesi
+# AI Tabanlı Afet Sonrası İhtiyaç Ölçeklendirmesi
 
-Deprem sonrasi bolgeye gore acil ihtiyaclari (barinma, gida, su, medikal, ekip) tahmin eden AI destekli API.
+![Python](https://img.shields.io/badge/Python-3.14-blue)
+![Flask](https://img.shields.io/badge/Flask-API-green)
+![Gemini](https://img.shields.io/badge/Gemini-AI-purple)
 
-## Canli URL
+Deprem sonrası bölgeye göre acil ihtiyaçları (barınma, gıda, su, medikal, ekip) makine öğrenmesi algoritmalarıyla tahmin eden ve **Gemini API** ile kapsamlı değerlendirme raporları üreten AI destekli projedir. Projede hem güçlü bir Backend API hem de etkileşimli bir Frontend arayüzü bulunmaktadır.
+
+## 🚀 Canlı Sistem URL
 **https://afet-bf7c.onrender.com/bolge**
 
-## API Endpointleri
-| Method | Endpoint | Aciklama |
+---
+
+## ✨ Özellikler (Features)
+
+- **Makine Öğrenmesi Destekli Tahminler:** Geçmiş verilere dayalı karar ağaçları/regresyon algoritmalarıyla en yakın tahmini ihtiyaçların çıkarılması.
+- **Yapay Zeka (LLM) Analiz Raporları:** Üretilen rakamların Gemini API kullanılarak doğal dilde lojistik planlarına ve kısa değerlendirmelere dönüştürülmesi.
+- **Etkileşimli Frontend (Web Arayüzü):** Kullanıcıların afet bölgelerini ve verileri anlık olarak girip sonuçları görebileceği entegre bir web sayfası.
+- **Otomatik CI/CD:** Her push ve PR'da kodun test edilip (pytest) otomatik canlı ortama (Render) aktarılması.
+
+---
+
+## 🛠 Kullanılan Teknolojiler (Tech Stack)
+
+### Backend
+- **Dil:** Python 3.x
+- **Framework:** Flask
+- **Veritabanı:** Supabase PostgreSQL (eu-central-1)
+- **ORM & Migration:** Flask-SQLAlchemy, Flask-Migrate (Alembic)
+- **Yapay Zeka:** Gemini AI (Google GenAI)
+
+### Frontend
+- **Diller:** HTML5, CSS3, JavaScript (Vanilla JS)
+
+---
+
+## 📂 Proje Yapısı
+
+```text
+AfetihtiyacAPI_new/
+├── .github/workflows/   # CI/CD pipeline (build, lint, test, deploy)
+├── api.py               # Ana Flask API endpointleri
+├── app.py               # WSGI giriş noktası (Render için)
+├── models.py            # SQLAlchemy veritabanı modelleri
+├── repository.py        # Repository pattern (CRUD işlemleri)
+├── model_singleton.py   # AI model Singleton deseni
+├── gemini_service.py    # Google Gemini entegrasyonu ve servis katmanı
+├── seed.py              # Otomatik veritabanı seed scripti
+├── render.yaml          # Render deploy konfigürasyonu
+├── requirements.txt     # Python bağımlılıkları
+├── .env.example         # Ortam değişkenleri şablonu
+├── data/                # Makine Öğrenmesi Modeli ve Veri Setleri
+│   ├── afet_ihtiyac_modeli.pkl
+│   └── dengeli_afet_verisi.csv
+├── frontend/            # Web Arayüzü Kodları
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+└── tests/               # Pytest Unit Testleri
+    ├── conftest.py
+    └── test_*.py
+```
+
+---
+
+## 🌐 API Endpointleri
+
+### Temel CRUD ve Tahmin
+| Method | Endpoint | Açıklama |
 |--------|----------|----------|
-| POST | `/bolge` | Yeni bolge ekle |
-| GET | `/bolge` | Tum bolgeleri listele |
-| POST | `/predict` | Deprem tahmini yap |
-| GET | `/tahminler/<id>` | Tahmin sonuclarini getir |
+| POST | `/bolge` | Yeni bölge ekle |
+| GET | `/bolge` | Tüm bölgeleri listele |
+| POST | `/predict` | Deprem tahmini yap ve kaydet |
+| GET | `/tahminler/<id>` | Tahmin sonuçlarını getir |
 
-## Veritabani
-- **Bulut:** Supabase PostgreSQL (eu-central-1)
-- **ORM:** Flask-SQLAlchemy
-- **Migration:** Flask-Migrate (Alembic)
-- **Seed:** Deploy sirasinda otomatik (`seed.py`)
+### Yapay Zeka (Gemini AI)
+| Method | Endpoint | Açıklama |
+|--------|----------|----------|
+| POST | `/ai/analiz` | Tahminlere dayalı detaylı rapor |
+| POST | `/ai/ozetle` | Bölgenin tüm tahminlerinin özeti |
+| POST | `/ai/oneri` | Lojistik ve kaynak dağıtım önerileri |
 
-## CI/CD Pipeline (GitHub Actions)
+---
 
-PR acildiginda ve main branch'e push yapildiginda otomatik olarak calisir:
+## 💻 Kurulum ve Çalıştırma (Lokal)
 
-```
-PR Acildi / Push
-    |
-    v
-[1. BUILD & LINT]  ->  flake8 ile kod kalitesi kontrolu
-    |                   + import dogrulama (build check)
-    v
-[2. TEST]          ->  pytest ile tum testler calisir
-    |                   (singleton, repository, API)
-    v
-[3. DEPLOY]        ->  Sadece main branch'te calisir
-    |                   Render'a otomatik deploy tetiklenir
-    v
-[Render Build]     ->  pip install + flask db upgrade + python seed.py
-    |
-    v
-[CANLI]            ->  https://afet-bf7c.onrender.com
-```
+Projeyi kendi bilgisayarınızda çalıştırmak için aşağıdaki adımları izleyin.
 
-### Pipeline Asamalari
-| Asama | Icerik | Tetiklenme |
-|-------|--------|------------|
-| Build & Lint | flake8 + import kontrolu | Her PR ve push |
-| Test | pytest (singleton, repository, API) | Her PR ve push |
-| Deploy | Render deploy hook tetikleme | Sadece main merge |
-
-## Ortam Degiskenleri ve Secret Yonetimi
-
-Hassas bilgiler **asla kod icerisinde tutulmaz**:
-
-| Degisken | Nerede Yonetiliyor | Aciklama |
-|----------|-------------------|----------|
-| `DATABASE_URL` | Render Dashboard + GitHub Secrets | Supabase PostgreSQL baglanti bilgisi |
-| `RENDER_DEPLOY_HOOK_URL` | GitHub Secrets | Otomatik deploy tetikleme URL'si |
-| `PYTHON_VERSION` | render.yaml | Hassas degil, acik tutulabilir |
-
-- **Lokal gelistirme:** `.env` dosyasi kullanilir (`.gitignore` ile korunur)
-- **Bulut ortami:** Render Environment Variables
-- **CI/CD:** GitHub Repository Secrets
-
-## Kurulum (Lokal)
+### 1. Backend Kurulumu
 ```bash
-# 1. Bagimliliklari yukle
+# 1. Bağımlılıkları yükle
 pip install -r requirements.txt
 
-# 2. Ortam degiskenlerini ayarla
+# 2. Ortam değişkenlerini ayarla
+# .env.example dosyasının ismini .env olarak değiştirip GEMINI_API_KEY ve DATABASE_URL girin.
 cp .env.example .env
 
-# 3. Veritabani migration
+# 3. Veritabanı migration ve seed işlemi
 flask --app api.py db upgrade
-
-# 4. Baslangic verisi yukle (opsiyonel)
 python seed.py
 
-# 5. Uygulamayi baslat
+# 4. Sunucuyu başlat
 python api.py
 ```
 
-## Proje Yapisi
-```
-├── .github/workflows/ci.yml   # CI/CD pipeline (build, lint, test, deploy)
-├── api.py                      # Flask API endpointleri
-├── models.py                   # SQLAlchemy veritabani modelleri
-├── repository.py               # Repository pattern (CRUD islemleri)
-├── model_singleton.py          # AI model Singleton deseni
-├── seed.py                     # Otomatik veritabani seed scripti
-├── render.yaml                 # Render deploy konfigurasyonu
-├── requirements.txt            # Python bagimliliklari
-├── .env.example                # Ortam degiskenleri sablonu
-├── .gitignore                  # Git ignore kurallari
-├── test_api.py                 # API unit testleri
-├── test_repository.py          # Repository unit testleri
-└── test_model_singleton.py     # Singleton unit testleri
-```
+### 2. Frontend'in Çalıştırılması
+Backend sunucusu arka planda çalışırken (`localhost:5000`), `frontend` klasörü içindeki `index.html` dosyasına çift tıklayarak tarayıcınızda açmanız yeterlidir. Arayüz otomatik olarak lokal sunucunuzla iletişime geçecektir.
+
+---
+
+## ⚙️ Ortam Değişkenleri ve Secret Yönetimi
+
+Hassas bilgiler **asla kod içerisinde tutulmaz**:
+
+| Değişken | Nerede Yönetiliyor | Açıklama |
+|----------|-------------------|----------|
+| `DATABASE_URL` | Render / GitHub Secrets | Supabase PostgreSQL bağlantı bilgisi |
+| `GEMINI_API_KEY` | Render / .env | Gemini AI entegrasyonu API Anahtarı |
+| `RENDER_DEPLOY_HOOK_URL`| GitHub Secrets | Otomatik deploy tetikleme URL'si |
+
+---
+
+## 🤝 Katkıda Bulunma (Contributing)
+
+1. Projeyi Fork'layın
+2. Yeni bir dal oluşturun (`git checkout -b feature/YeniOzellik`)
+3. Değişikliklerinizi commit'leyin (`git commit -m 'feat: Yeni bir özellik eklendi'`)
+4. Dalınıza pushlayın (`git push origin feature/YeniOzellik`)
+5. Bir Pull Request açın
+
+## 📄 Lisans
+Bu proje MIT Lisansı ile lisanslanmıştır.
