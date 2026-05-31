@@ -4,7 +4,7 @@ import numpy as np
 # =====================================================================
 # 1. YEREL DOSYADAN HAM VERİYİ OKUMA
 # =====================================================================
-dosya_yolu = "dengeli_afet_verisi.csv"
+dosya_yolu = "data/dengeli_afet_verisi.csv"
 
 try:
     df = pd.read_csv(dosya_yolu)

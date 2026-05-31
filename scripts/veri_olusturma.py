@@ -72,6 +72,6 @@ for kolon in hedef_sutunlar:
 # =====================================================================
 # 4. KAYDETME
 # =====================================================================
-dosya_adi = "dengeli_afet_verisi.csv"
+dosya_adi = "data/dengeli_afet_verisi.csv"
 df.to_csv(dosya_adi, index=False)
 print(f"✅ İşlem tamam! Yeni ve dengeli veri seti '{dosya_adi}' olarak kaydedildi.")

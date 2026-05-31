@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Afet İhtiyaç Analizi | AI Premium</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <!-- Üst Başlık (Header) -->
+    <header class="app-header">
+        <div class="header-icon">🌍</div>
+        <h1>AI Afet Yönetim Sistemi</h1>
+    </header>
+
+    <!-- Harita -->
+    <div id="map"></div>
+
+    <!-- Sağ Sidebar (Glassmorphism) -->
+    <div class="sidebar hidden" id="sidebar">
+        
+        <div class="sidebar-header">
+            <h2 id="selectedCityName">Şehir Seçin</h2>
+            <button class="close-btn" id="closeSidebarBtn">✕</button>
+        </div>
+
+        <p class="form-desc">Simülasyon modelini test etmek için manuel parametreler girebilir veya veri setimizdeki istatistiksel dağılımlara uygun rastgele bir senaryo çekebilirsiniz.</p>
+        
+        <button class="btn-secondary" id="randomScenarioBtn" style="margin-bottom: 20px;">
+            🎲 Simülasyon Verisi Çek (Rastgele)
+        </button>
+
+        <div class="form-container" id="formContainer">
+            <div class="input-group">
+                <label>Deprem Büyüklüğü (Mw)</label>
+                <input type="number" id="depremBuyuklugu" step="0.1" value="6.5">
+            </div>
+
+            <div class="input-group">
+                <label>Bina Yıkım Oranı (0.0 - 1.0)</label>
+                <input type="number" id="binaYikimOrani" step="0.01" value="0.25">
+            </div>
+
+            <div class="input-group">
+                <label>Hava Sıcaklığı (°C)</label>
+                <input type="number" id="havaSicakligi" value="12">
+            </div>
+
+            <div class="input-group">
+                <label>Ulaşım Durumu</label>
+                <select id="ulasimDurumu">
+                    <option value="0">Kapalı (0)</option>
+                    <option value="1">Kısmi Açık (1)</option>
+                    <option value="2" selected>Açık (2)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Yaşlı Nüfus Oranı (0.0 - 1.0)</label>
+                <input type="number" id="yasliNufus" step="0.01" value="0.15">
+            </div>
+
+            <button class="btn-primary" id="predictBtn">
+                <span class="btn-text">Yapay Zeka İle Analiz Et</span>
+                <div class="loader hidden" id="predictLoader"></div>
+            </button>
+        </div>
+
+        <!-- Sonuçlar Ekranı -->
+        <div class="results-container hidden" id="resultsContainer">
+            <h3 class="results-title">Tahmini Acil İhtiyaçlar</h3>
+            
+            <div class="cards-grid">
+                <!-- Su -->
+                <div class="stat-card">
+                    <div class="stat-icon icon-su">💧</div>
+                    <div class="stat-info">
+                        <span>Su (Litre)</span>
+                        <strong id="resSu">0</strong>
+                    </div>
+                </div>
+                <!-- Gıda -->
+                <div class="stat-card">
+                    <div class="stat-icon icon-gida">🍞</div>
+                    <div class="stat-info">
+                        <span>Gıda (Öğün)</span>
+                        <strong id="resGida">0</strong>
+                    </div>
+                </div>
+                <!-- Çadır -->
+                <div class="stat-card">
+                    <div class="stat-icon icon-cadir">⛺</div>
+                    <div class="stat-info">
+                        <span>Barınma (Çadır)</span>
+                        <strong id="resBarinma">0</strong>
+                    </div>
+                </div>
+                <!-- Medikal -->
+                <div class="stat-card">
+                    <div class="stat-icon icon-medikal">⚕️</div>
+                    <div class="stat-info">
+                        <span>Medikal Kit</span>
+                        <strong id="resMedikal">0</strong>
+                    </div>
+                </div>
+                <!-- Arama Kurtarma -->
+                <div class="stat-card full-width">
+                    <div class="stat-icon icon-ekip">👷</div>
+                    <div class="stat-info">
+                        <span>Arama Kurtarma Ekibi</span>
+                        <strong id="resEkip">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gemini Özet -->
+            <div class="ai-summary-card">
+                <div class="ai-header">
+                    <i>✨</i>
+                    <span>Gemini Kriz Durum Özeti</span>
+                </div>
+                <div class="ai-text" id="aiSummaryText">
+                    Analiz bekleniyor...
+                </div>
+            </div>
+            
+            <button class="btn-secondary" id="fullReportBtn" style="margin-top: 15px; border-color: #8b5cf6; color: #8b5cf6;">
+                📄 Kapsamlı AI Raporu Üret
+            </button>
+            
+        </div>
+    </div>
+
+    <!-- Modal (Tam Rapor) -->
+    <div class="modal hidden" id="reportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 Yapay Zeka Detaylı Kriz ve Lojistik Raporu</h2>
+                <button class="close-modal" id="closeModalBtn">✕</button>
+            </div>
+            <div class="modal-body" id="fullReportContent">
+                Rapor yükleniyor... Lütfen bekleyin.
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="turkey.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

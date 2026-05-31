@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
 import joblib
 
-df = pd.read_csv("dengeli_afet_verisi.csv")
+df = pd.read_csv("data/dengeli_afet_verisi.csv")
 
 print("🚀 Model hazırlıkları başlıyor...\n")
 
@@ -38,8 +38,8 @@ model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 
 # Canlı sisteme (Web veya Mobil) entegre etmek için modeli kaydediyoruz
-joblib.dump(model, 'afet_ihtiyac_modeli.pkl')
-print("💾 Model ('afet_ihtiyac_modeli.pkl') başarıyla kaydedildi!\n")
+joblib.dump(model, 'data/afet_ihtiyac_modeli.pkl')
+print("💾 Model ('data/afet_ihtiyac_modeli.pkl') başarıyla kaydedildi!\n")
 
 # --- 5. SONUÇLARI DEĞERLENDİRME VE RAPORLAMA ---
 print("✅ Eğitim Tamamlandı! İşte Sayısal Tahmin Hata Raporları:\n")

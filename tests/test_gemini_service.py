@@ -220,7 +220,7 @@ class TestAiAnalizEndpoint:
 
     @patch('api.gemini_service')
     def test_ai_analiz_gemini_error(self, mock_gemini, client):
-        """Gemini API hatası durumunda 500 döndüğünü doğrular."""
+        """Gemini API hatası durumunda graceful fallback (200) döndüğünü doğrular."""
         mock_gemini.kisa_degerlendirme_olustur.return_value = "Mock özet"
         bolge_resp = _bolge_olustur(client)
         bolge_id = bolge_resp.get_json()['bolge_id']
@@ -230,9 +230,10 @@ class TestAiAnalizEndpoint:
         mock_gemini.analiz_raporu_olustur.side_effect = Exception("API bağlantı hatası")
 
         response = client.post('/ai/analiz', json={'afet_olayi_id': afet_olayi_id})
-        assert response.status_code == 500
+        assert response.status_code == 200
         json_data = response.get_json()
-        assert 'Gemini API hatası' in json_data['message']
+        assert json_data['status'] == 'success'
+        assert 'Geçici Olarak Kullanılamıyor' in json_data['analiz_raporu']
 
 
 class TestAiOzetleEndpoint:

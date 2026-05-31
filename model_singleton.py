@@ -11,7 +11,7 @@ class AIModelSingleton:
     _instance = None
     _model = None
 
-    def __new__(cls, model_path='afet_ihtiyac_modeli.pkl'):
+    def __new__(cls, model_path='data/afet_ihtiyac_modeli.pkl'):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._model = cls._load_model(model_path)
