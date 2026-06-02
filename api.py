@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app) # Tüm domainlerden gelen isteklere izin ver
+CORS(app)  # Tüm domainlerden gelen isteklere izin ver
 
 # Bulut ortamında DATABASE_URL environment variable'dan okunur
 # Lokal geliştirmede SQLite kullanılır
@@ -93,7 +93,7 @@ def predict():
             'ulasim_durumu': veri['ulasim_durumu'],
             'yasli_nufus_orani': veri['yasli_nufus_orani'],
         }
-        # İş Kuralı (Business Logic): Eğer bina yıkımı %0 ise veya deprem 3.5'tan küçükse 
+        # İş Kuralı (Business Logic): Eğer bina yıkımı %0 ise veya deprem 3.5'tan küçükse
         # acil bir kriz durumu yoktur, yapay zeka istatistiğine gerek kalmadan 0 döndürülür.
         if veri['bina_yikim_orani'] <= 0.0 or veri['deprem_buyuklugu'] < 3.5:
             tahmin = [0, 0, 0, 0, 0]
@@ -192,7 +192,7 @@ def ai_analiz():
         # Gemini ile analiz raporu oluştur
         try:
             rapor = gemini_service.analiz_raporu_olustur(bolge, tahmin, afet_olayi)
-        except Exception as e:
+        except Exception:
             rapor = f"""
 ## ⚠️ Yapay Zeka Servisi (Gemini) Geçici Olarak Kullanılamıyor
 

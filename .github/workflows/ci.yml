@@ -72,13 +72,16 @@ jobs:
           pip install pytest
 
       - name: Singleton Testlerini Calistir
-        run: pytest test_model_singleton.py -v
+        run: pytest tests/test_model_singleton.py -v
 
       - name: Repository Testlerini Calistir
-        run: pytest test_repository.py -v
+        run: pytest tests/test_repository.py -v
 
       - name: API Testlerini Calistir
-        run: pytest test_api.py -v
+        run: pytest tests/test_api.py -v
+
+      - name: Gemini Service Testlerini Calistir
+        run: pytest tests/test_gemini_service.py -v
 
   # ============================================================
   # 3. DEPLOY - Otomatik deploy (sadece main branch)
