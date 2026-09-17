@@ -207,7 +207,8 @@ class TestAiAnalizEndpoint:
         assert 'bolge' in json_data
         assert 'tahmin' in json_data
 
-    def test_ai_analiz_missing_param(self, client):
+    @patch('api.gemini_service')
+    def test_ai_analiz_missing_param(self, mock_gemini, client):
         """Eksik parametre ile 400 döndüğünü doğrular."""
         response = client.post('/ai/analiz', json={})
         assert response.status_code == 400
@@ -256,7 +257,8 @@ class TestAiOzetleEndpoint:
         assert json_data['ozet_raporu'] == "Özet rapor metni"
         assert json_data['tahmin_sayisi'] >= 1
 
-    def test_ai_ozetle_missing_param(self, client):
+    @patch('api.gemini_service')
+    def test_ai_ozetle_missing_param(self, mock_gemini, client):
         """Eksik parametre ile 400 döndüğünü doğrular."""
         response = client.post('/ai/ozetle', json={})
         assert response.status_code == 400
@@ -299,7 +301,8 @@ class TestAiOneriEndpoint:
         assert 'bolge' in json_data
         assert 'tahmin' in json_data
 
-    def test_ai_oneri_missing_param(self, client):
+    @patch('api.gemini_service')
+    def test_ai_oneri_missing_param(self, mock_gemini, client):
         """Eksik parametre ile 400 döndüğünü doğrular."""
         response = client.post('/ai/oneri', json={})
         assert response.status_code == 400
@@ -309,3 +312,12 @@ class TestAiOneriEndpoint:
         """Var olmayan afet_olayi_id ile 404 döndüğünü doğrular."""
         response = client.post('/ai/oneri', json={'afet_olayi_id': 9999})
         assert response.status_code == 404
+
+
+@pytest.mark.parametrize('endpoint', ['/ai/analiz', '/ai/ozetle', '/ai/oneri'])
+def test_ai_service_unavailable(client, monkeypatch, endpoint):
+    """Servis yoksa, eksik parametre durumundan ayrı olarak 503 beklenir."""
+    monkeypatch.setattr('api.gemini_service', None)
+    response = client.post(endpoint, json={'bolge_id': 1, 'afet_olayi_id': 1})
+    assert response.status_code == 503
+    assert response.get_json()['status'] == 'error'
