@@ -80,6 +80,25 @@ AfetihtiyacAPI_new/
 | POST | `/ai/ozetle` | Bölgenin tüm tahminlerinin özeti |
 | POST | `/ai/oneri` | Lojistik ve kaynak dağıtım önerileri |
 
+### Bölge ve Tahmin İsteklerinde Veri Kontrolü
+
+`POST /bolge` ve `POST /predict`, `Content-Type: application/json` ile bir JSON
+nesnesi bekler. Bozuk JSON, liste/null gövde, eksik alan veya geçersiz değer
+gönderildiğinde `400` ve `{"status": "error", "message": "..."}` döner.
+Doğrulama, veritabanı işlemlerinden ve model çağrısından önce yapılır.
+
+- `nufus`: 0–2147483647 arasında tam sayı; `bolge_id`: 1–2147483647 arasında tam sayı.
+- `bina_yikim_orani` ve `yasli_nufus_orani`: 0–1 arasında sayı (yüzde değil oran).
+- `ulasim_durumu`: 0, 1 veya 2 tam sayılarından biri.
+- `deprem_buyuklugu`: negatif olmayan sonlu sayı; `hava_sicakligi`: sonlu sayı.
+- `ad`/`il`: boş olmayan, sırasıyla en fazla 100/50 karakterlik metin.
+  İsteğe bağlı `ilce`, null veya boş olmayan en fazla 50 karakterlik metindir.
+- İsteğe bağlı koordinatlar null olabilir; enlem −90–90, boylam −180–180 aralığındadır.
+- Sayısal alanlarda metin (`"50000"`), boolean (`true`/`false`), NaN ve sonsuzluk kabul edilmez.
+
+Bu kontroller veri biçimini doğrular; modelin tahmin doğruluğunu veya gerçek afet
+koşullarına uygunluğunu doğrulamaz.
+
 ---
 
 ## 💻 Kurulum ve Çalıştırma (Lokal)

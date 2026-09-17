@@ -7,6 +7,7 @@ from model_singleton import AIModelSingleton
 from gemini_service import GeminiService
 
 import os
+import math
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -38,13 +39,76 @@ except Exception as e:
     print(f"Gemini API servisi başlatılamadı: {e}")
 
 
+def _json_nesnesi(gerekli_alanlar):
+    """Geçersiz JSON ve nesne olmayan gövdeler istemci hatasıdır."""
+    veri = request.get_json(silent=True)
+    if not isinstance(veri, dict):
+        return None, 'İstek gövdesi geçerli bir JSON nesnesi olmalıdır.'
+    for alan in gerekli_alanlar:
+        if alan not in veri:
+            return None, f'Eksik parametre: {alan}'
+    return veri, None
+
+
+def _sayi_hatasi(veri, alan, alt=None, ust=None, tamsayi=False):
+    deger = veri[alan]
+    # bool, Python'da int alt sınıfıdır; JSON true/false sayı kabul edilmez.
+    if type(deger) not in (int, float) or (tamsayi and type(deger) is not int):
+        tur = 'tam sayı' if tamsayi else 'sayı'
+        return f'{alan}: {tur} olmalıdır.'
+    try:
+        sonlu = math.isfinite(deger)
+    except OverflowError:
+        sonlu = False
+    if not sonlu:
+        return f'{alan}: sonlu bir sayı olmalıdır.'
+    if alt is not None and deger < alt:
+        return f'{alan}: en az {alt} olmalıdır.'
+    if ust is not None and deger > ust:
+        return f'{alan}: en fazla {ust} olmalıdır.'
+    return None
+
+
+def _bolge_hatasi(veri):
+    for alan, uzunluk in [('ad', 100), ('il', 50), ('ilce', 50)]:
+        if alan == 'ilce' and veri.get(alan) is None:
+            continue
+        deger = veri[alan]
+        if not isinstance(deger, str) or not deger.strip() or len(deger) > uzunluk:
+            return f'{alan}: boş olmayan, en fazla {uzunluk} karakterlik metin olmalıdır.'
+    hata = _sayi_hatasi(veri, 'nufus', alt=0, ust=2147483647, tamsayi=True)
+    if hata:
+        return hata
+    for alan, sinir in [('koordinat_lat', 90), ('koordinat_lon', 180)]:
+        if veri.get(alan) is not None:
+            hata = _sayi_hatasi(veri, alan, alt=-sinir, ust=sinir)
+            if hata:
+                return hata
+    return None
+
+
+def _tahmin_hatasi(veri):
+    kurallar = [
+        ('bolge_id', 1, 2147483647, True),
+        ('deprem_buyuklugu', 0, None, False),
+        ('bina_yikim_orani', 0, 1, False),
+        ('hava_sicakligi', None, None, False),
+        ('ulasim_durumu', 0, 2, True),
+        ('yasli_nufus_orani', 0, 1, False),
+    ]
+    for alan, alt, ust, tamsayi in kurallar:
+        hata = _sayi_hatasi(veri, alan, alt=alt, ust=ust, tamsayi=tamsayi)
+        if hata:
+            return hata
+    return None
+
+
 @app.route('/bolge', methods=['POST'])
 def bolge_ekle():
-    veri = request.get_json()
-    gerekli = ['ad', 'il', 'nufus']
-    for alan in gerekli:
-        if alan not in veri:
-            return jsonify({'status': 'error', 'message': f'Eksik parametre: {alan}'}), 400
+    veri, hata = _json_nesnesi(['ad', 'il', 'nufus'])
+    hata = hata or _bolge_hatasi(veri)
+    if hata:
+        return jsonify({'status': 'error', 'message': hata}), 400
 
     bolge_id = BolgeRepository.kaydet(
         ad=veri['ad'],
@@ -68,17 +132,16 @@ def bolgeleri_listele():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    gerekli_alanlar = [
+        'bolge_id', 'deprem_buyuklugu', 'bina_yikim_orani',
+        'hava_sicakligi', 'ulasim_durumu', 'yasli_nufus_orani'
+    ]
+    veri, hata = _json_nesnesi(gerekli_alanlar)
+    hata = hata or _tahmin_hatasi(veri)
+    if hata:
+        return jsonify({'status': 'error', 'message': hata}), 400
+
     try:
-        veri = request.get_json()
-
-        gerekli_alanlar = [
-            'bolge_id', 'deprem_buyuklugu', 'bina_yikim_orani',
-            'hava_sicakligi', 'ulasim_durumu', 'yasli_nufus_orani'
-        ]
-        for alan in gerekli_alanlar:
-            if alan not in veri:
-                return jsonify({'status': 'error', 'message': f'Eksik parametre: {alan}'}), 400
-
         bolge = BolgeRepository.id_ile_getir(veri['bolge_id'])
         if bolge is None:
             return jsonify({'status': 'error', 'message': 'Bolge bulunamadi'}), 404
